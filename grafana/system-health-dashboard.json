@@ -1,0 +1,80 @@
+{
+  "uid": "system-health-dashboard",
+  "title": "System Health Dashboard",
+  "tags": ["prometheus", "system-health-check-api"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {"list": []},
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "API Request Rate",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "fieldConfig": {"defaults": {"unit": "reqps"}},
+      "targets": [{"expr": "sum(rate(api_requests_total[5m]))", "refId": "A", "legendFormat": "api requests/s"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "API Latency",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "fieldConfig": {"defaults": {"unit": "s"}},
+      "targets": [{"expr": "sum(rate(api_request_duration_seconds_sum[5m])) / sum(rate(api_request_duration_seconds_count[5m]))", "refId": "A", "legendFormat": "avg latency"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Health Check Duration",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "fieldConfig": {"defaults": {"unit": "s"}},
+      "targets": [{"expr": "sum(rate(health_check_duration_seconds_sum[5m])) / sum(rate(health_check_duration_seconds_count[5m]))", "refId": "A", "legendFormat": "avg health check duration"}]
+    },
+    {
+      "type": "stat",
+      "title": "Healthy Components",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 6, "x": 12, "y": 8},
+      "fieldConfig": {"defaults": {"unit": "none"}},
+      "targets": [{"expr": "sum(healthy_components)", "refId": "A", "legendFormat": "healthy"}]
+    },
+    {
+      "type": "stat",
+      "title": "Unhealthy Components",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 6, "x": 18, "y": 8},
+      "fieldConfig": {"defaults": {"unit": "none"}},
+      "targets": [{"expr": "sum(unhealthy_components)", "refId": "A", "legendFormat": "unhealthy"}]
+    },
+    {
+      "type": "stat",
+      "title": "Error Rate",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "fieldConfig": {"defaults": {"unit": "percentunit"}},
+      "targets": [{"expr": "sum(unhealthy_components) / clamp_min(sum(healthy_components) + sum(unhealthy_components), 1)", "refId": "A", "legendFormat": "error ratio"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "P95 Response Time",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+      "fieldConfig": {"defaults": {"unit": "s"}},
+      "targets": [{"expr": "histogram_quantile(0.95, sum(rate(api_request_duration_seconds_bucket[5m])) by (le))", "refId": "A", "legendFormat": "p95 api latency"}]
+    },
+    {
+      "type": "stat",
+      "title": "Dependency Failures",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+      "fieldConfig": {"defaults": {"unit": "none"}},
+      "targets": [{"expr": "sum(unhealthy_components)", "refId": "A", "legendFormat": "dependency failures"}]
+    }
+  ]
+}
