@@ -312,3 +312,19 @@ Future enhancements
 - BigQuery analytics
 - Cloud Monitoring integration
 - Service dependency dashboards
+
+## Monitoring
+
+Current
+
+- Prometheus metrics
+- Structured logging
+- Health endpoints
+
+Future
+
+- Managed Prometheus
+- Cloud Monitoring dashboards
+- Alert Policies
+- SLOs
+- Error Budgets

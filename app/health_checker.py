@@ -8,6 +8,7 @@ import httpx
 
 from app.config import get_settings
 from app.logger import get_logger
+from app.metrics import health_check_duration_seconds, health_checks_total
 from app.models import ComponentHealth, Node
 
 logger = get_logger("health_checker")
@@ -44,4 +45,6 @@ class HealthChecker:
 
     async def check(self, components: list[Node]) -> list[ComponentHealth]:
         """Check all components concurrently."""
-        return await asyncio.gather(*(self.check_component(component) for component in components))
+        health_checks_total.inc(len(components))
+        with health_check_duration_seconds.time():
+            return await asyncio.gather(*(self.check_component(component) for component in components))

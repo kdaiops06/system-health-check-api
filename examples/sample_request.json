@@ -1,0 +1,20 @@
+{
+  "nodes": [
+    {
+      "id": "service-a",
+      "name": "Service A",
+      "endpoint": "http://localhost:8080/health"
+    },
+    {
+      "id": "service-b",
+      "name": "Service B",
+      "endpoint": "http://localhost:8080/health"
+    }
+  ],
+  "edges": [
+    {
+      "from_node": "service-a",
+      "to_node": "service-b"
+    }
+  ]
+}

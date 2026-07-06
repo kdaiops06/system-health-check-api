@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from tabulate import tabulate
 
 from app.logger import get_logger
+from app.metrics import healthy_components, unhealthy_components
 from app.models import ComponentHealth, HealthCheckResponse
 
 logger = get_logger("aggregator")
@@ -26,6 +27,8 @@ class HealthAggregator:
 
     def aggregate(self, results: list[ComponentHealth]) -> HealthCheckResponse:
         summary = self.summarize(results)
+        healthy_components.set(summary.healthy_components)
+        unhealthy_components.set(summary.unhealthy_components)
         overall_status = "healthy" if summary.unhealthy_components == 0 else "unhealthy"
         logger.info("summary total=%s healthy=%s unhealthy=%s", summary.total_components, summary.healthy_components, summary.unhealthy_components)
         return HealthCheckResponse(overall_status=overall_status, components=results, summary=summary.model_dump())

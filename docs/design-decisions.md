@@ -262,3 +262,19 @@ This minimizes coupling between transport and domain logic while avoiding unnece
 ## Tradeoff
 
 The API performs lightweight orchestration, which is appropriate for the scope of this assignment. A larger system might introduce an application service layer if additional workflows emerged.
+
+# DD-014: Prometheus Metrics
+
+## Decision
+
+Expose application metrics using Prometheus.
+
+## Rationale
+
+Metrics provide visibility into API traffic, request latency, component health, and dependency performance.
+
+The implementation is compatible with Google Cloud Managed Prometheus and Cloud Monitoring.
+
+## Tradeoff
+
+Only foundational metrics are implemented to remain within the assignment scope.
