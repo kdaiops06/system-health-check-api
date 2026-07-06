@@ -214,3 +214,35 @@ Future enhancements include:
 ## Tradeoff
 
 Only foundational observability is implemented to remain within the assignment time budget.
+
+# DD-011: Asynchronous Health Checks
+
+## Decision
+
+Execute component health checks concurrently using `asyncio` and `httpx.AsyncClient`.
+
+## Rationale
+
+Health checks are network-bound, I/O-intensive operations. Running them concurrently significantly reduces total evaluation time compared to sequential execution while improving throughput and resource utilization.
+
+Using `httpx.AsyncClient` provides efficient connection management and aligns with FastAPI's asynchronous execution model.
+
+## Tradeoff
+
+Concurrent execution introduces additional complexity around timeout handling and exception management. However, the performance benefits outweigh the implementation complexity for dependency-based health evaluation services.
+
+Future production enhancements may include configurable retry policies, exponential backoff, adaptive concurrency, and circuit breaker patterns.
+
+# DD-012: Request-Scoped Aggregation
+
+### Decision
+
+Aggregate health results entirely in memory for each request.
+
+### Rationale
+
+The assignment does not require persistence. Request-scoped aggregation keeps the implementation stateless, simplifies deployment on Cloud Run, and avoids unnecessary operational complexity.
+
+### Tradeoff
+
+Historical health trends are not retained. A production implementation could persist results to BigQuery, Cloud SQL, or Firestore for analytics and reporting.
