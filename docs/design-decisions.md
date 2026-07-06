@@ -214,3 +214,18 @@ Future enhancements include:
 ## Tradeoff
 
 Only foundational observability is implemented to remain within the assignment time budget.
+
+## DD-011: Asynchronous Health Checks
+
+### Decision
+
+Execute component health checks concurrently using asyncio and httpx.AsyncClient.
+
+### Rationale
+
+Health checks are I/O-bound operations. Running them concurrently minimizes overall execution time while improving scalability and resource utilization.
+
+### Tradeoff
+
+Concurrency introduces additional complexity but significantly improves throughput for dependency-heavy systems.
+

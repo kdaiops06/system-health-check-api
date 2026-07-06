@@ -296,3 +296,21 @@ The implementation intentionally favors
 rather than unnecessary architectural complexity.
 
 The objective is to deliver a clean, production-oriented MVP that can evolve into a larger platform without significant redesign.
+
+
+## Concurrent Health Evaluation
+
+Current implementation
+
+- asyncio
+- httpx.AsyncClient
+- Request-scoped execution
+- Configurable timeout
+
+Future production enhancements
+
+- Retry with exponential backoff
+- Circuit breaker
+- Adaptive concurrency
+- Connection pooling tuning
+- Health check caching
