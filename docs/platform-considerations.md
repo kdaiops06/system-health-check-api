@@ -2,36 +2,84 @@
 
 ## Objective
 
-This implementation intentionally focuses on a production-oriented MVP suitable for deployment on Google Cloud while minimizing operational complexity.
+This implementation delivers a production-oriented MVP for a dependency-based health checking service.
+
+The focus is not only functional correctness, but also demonstrating platform engineering principles including reliability, observability, automation, and operational simplicity using Google Cloud managed services.
 
 ---
 
-## Runtime Platform
+# Platform Architecture
 
-- Google Cloud Run
-- Artifact Registry
-- GitHub Actions
-- Terraform
-
-Reason
-
-Cloud Run provides:
-
-- fully managed infrastructure
-- automatic scaling
-- integrated logging
-- integrated monitoring
-- reduced operational overhead
-
-For the scope of this assignment, Cloud Run was preferred over GKE.
+```
+                    GitHub
+                       │
+                       ▼
+              GitHub Actions
+                       │
+             Build & Unit Tests
+                       │
+                       ▼
+              Docker Image Build
+                       │
+                       ▼
+            Artifact Registry
+                       │
+                       ▼
+                Cloud Run Service
+                       │
+      ┌────────────────┴────────────────┐
+      ▼                                 ▼
+Cloud Logging                  Cloud Monitoring
+      │                                 │
+      └──────────────┬──────────────────┘
+                     ▼
+             Platform Operators
+```
 
 ---
 
-## CI/CD
+# Runtime Platform
 
-Source Control
+## Current
 
-GitHub
+The application is designed for deployment on Google Cloud Run.
+
+Reasons
+
+- Fully managed serverless runtime
+- Automatic scaling
+- Pay-per-use pricing
+- Native integration with Google Cloud Logging
+- Native integration with Cloud Monitoring
+- No Kubernetes operational overhead
+
+---
+
+## Future
+
+For larger production environments the application could be deployed using:
+
+- GKE Autopilot
+- Cloud Deploy
+- Multi-region Cloud Run
+- Global HTTPS Load Balancer
+
+---
+
+# CI/CD Strategy
+
+Current implementation
+
+```
+Developer
+
+↓
+
+Feature Branch
+
+↓
+
+Pull Request
 
 ↓
 
@@ -39,11 +87,11 @@ GitHub Actions
 
 ↓
 
-Unit Tests
+Lint
 
 ↓
 
-Lint
+Unit Tests
 
 ↓
 
@@ -51,84 +99,200 @@ Docker Build
 
 ↓
 
-Artifact Registry
+Merge
 
 ↓
 
-Cloud Run
+Deploy
+```
 
-Future
+GitHub Actions validates every change before merge.
 
-Cloud Deploy
-Progressive Delivery
-Blue/Green Deployment
+Future improvements
 
----
-
-## Observability
-
-Current
-
-- Application logging
-- Health endpoints
-- Prometheus metrics
-
-Future
-
-- Google Managed Prometheus
-- Cloud Monitoring
-- Cloud Logging dashboards
-- Alert Policies
-- SLOs
-- Error Budgets
+- Cloud Deploy
+- Progressive Delivery
+- Blue/Green Deployment
+- Canary Releases
+- Automated Rollback
 
 ---
 
-## Security
+# Infrastructure as Code
 
 Current
 
-- Environment variables
-- Input validation
+Terraform provides the deployment foundation for
+
+- Cloud Run
+- Artifact Registry
 
 Future
+
+Additional infrastructure could include
 
 - Secret Manager
 - IAM
-- Binary Authorization
-- Workload Identity
+- Cloud Monitoring
+- Alert Policies
+- Managed Prometheus
 - VPC Connector
-- Private Service Connect
 
 ---
 
-## Reliability
+# Observability
 
-Current
+Current implementation
 
-- DAG validation
-- Cycle detection
-- Async execution
+- Structured application logging
+- Health endpoints
+- Prometheus metrics
+- Cloud Logging compatible output
 
-Future
+Future enhancements
 
-- Retry policies
-- Circuit breakers
-- Exponential backoff
-- Timeouts
+- Managed Prometheus
+- Cloud Monitoring dashboards
+- Alert Policies
+- Cloud Trace
+- OpenTelemetry
+- Error Budgets
+- SLO Dashboards
+
+---
+
+# Reliability
+
+Current implementation
+
+- Dependency graph validation
+- DAG cycle detection
+- Request-scoped execution
+- Input validation
+- Concurrent execution (planned)
+
+Future enhancements
+
+- Retry with exponential backoff
+- Circuit breaker
+- Bulkhead isolation
 - Rate limiting
+- Adaptive concurrency
+- Health check caching
 
 ---
 
-## AI SRE Evolution
+# Security
 
-Future capabilities
+Current implementation
+
+- Environment-based configuration
+- Input validation using Pydantic
+
+Future enhancements
+
+- Secret Manager
+- Workload Identity
+- IAM least privilege
+- Binary Authorization
+- Private Service Connect
+- Cloud Armor
+- VPC Service Controls
+
+---
+
+# Scalability
+
+Current implementation
+
+The application is stateless.
+
+This allows Cloud Run to scale horizontally without application changes.
+
+Future improvements
+
+- Distributed execution
+- Work queue based processing
+- Pub/Sub event driven execution
+- Cloud Tasks
+- Multi-region deployment
+
+---
+
+# AI SRE Evolution
+
+The current implementation establishes the foundation for future AI-assisted Site Reliability Engineering capabilities.
+
+Potential enhancements include
 
 - Vertex AI Root Cause Analysis
-- AI Incident Summary
+- AI Incident Summaries
 - AI Runbook Generation
+- AI Failure Pattern Detection
+- AI Dependency Impact Analysis
+- Predictive Failure Detection
+- Capacity Forecasting
 - AI Platform Gateway
-- AI Policy Engine
 - Prompt Guardrails
-- Hallucination Detection
 - AI Observability
+
+---
+
+# Operational Runbook
+
+Platform operators should monitor
+
+- API availability
+- Dependency failures
+- Health check latency
+- Request latency
+- Error rate
+- Platform resource utilization
+
+Operational actions
+
+- Review logs in Cloud Logging
+- Monitor dashboards
+- Investigate unhealthy dependencies
+- Scale Cloud Run if required
+
+---
+
+# Production Readiness
+
+Current implementation demonstrates
+
+- Infrastructure as Code
+- Continuous Integration
+- Containerized deployment
+- Health endpoints
+- Structured logging
+- Dependency validation
+- Production-oriented architecture
+
+Future production enhancements
+
+- Distributed tracing
+- SLO management
+- Error budgets
+- Multi-region failover
+- Disaster recovery
+- Chaos engineering
+- AI-assisted operations
+
+---
+
+# Engineering Philosophy
+
+The implementation intentionally favors
+
+- Simplicity
+- Maintainability
+- Google Cloud managed services
+- Operational reliability
+- Developer Experience
+- Clear separation of responsibilities
+
+rather than unnecessary architectural complexity.
+
+The objective is to deliver a clean, production-oriented MVP that can evolve into a larger platform without significant redesign.
