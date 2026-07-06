@@ -246,3 +246,19 @@ The assignment does not require persistence. Request-scoped aggregation keeps th
 ### Tradeoff
 
 Historical health trends are not retained. A production implementation could persist results to BigQuery, Cloud SQL, or Firestore for analytics and reporting.
+
+# DD-013: Thin API Layer
+
+## Decision
+
+Keep the REST API responsible only for request validation, workflow orchestration, and HTTP response generation.
+
+## Rationale
+
+Business logic remains encapsulated within the DependencyGraph, HealthChecker, and HealthAggregator components.
+
+This minimizes coupling between transport and domain logic while avoiding unnecessary architectural layers.
+
+## Tradeoff
+
+The API performs lightweight orchestration, which is appropriate for the scope of this assignment. A larger system might introduce an application service layer if additional workflows emerged.
