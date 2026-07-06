@@ -132,3 +132,19 @@ Future capabilities
 - Prompt Guardrails
 - Hallucination Detection
 - AI Observability
+
+## Reliability Considerations
+
+Current implementation
+
+- DAG validation
+- Cycle detection
+- Request-scoped execution
+
+Future production improvements
+
+- Retry with exponential backoff
+- Circuit breaker
+- Bulkhead isolation
+- Per-service timeout
+- Adaptive concurrency
