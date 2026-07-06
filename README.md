@@ -345,3 +345,20 @@ The remaining work focuses on integrating asynchronous health evaluation, system
 - ⏳ Aggregation
 - ⏳ Metrics
 - ⏳ Terraform Deployment
+
+Current
+
+- Structured logging
+- Health endpoints
+- Prometheus metrics
+- Cloud Logging compatible
+
+Future
+
+- Managed Prometheus
+- Cloud Monitoring dashboards
+- Alert Policies
+- Cloud Trace
+- OpenTelemetry
+
+
