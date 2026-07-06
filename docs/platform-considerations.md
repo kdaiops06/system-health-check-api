@@ -296,3 +296,19 @@ The implementation intentionally favors
 rather than unnecessary architectural complexity.
 
 The objective is to deliver a clean, production-oriented MVP that can evolve into a larger platform without significant redesign.
+
+## Health Aggregation
+
+Current implementation
+
+- Stateless aggregation
+- In-memory request processing
+- Human-readable table output
+- JSON API response
+
+Future enhancements
+
+- Historical health trends
+- BigQuery analytics
+- Cloud Monitoring integration
+- Service dependency dashboards
