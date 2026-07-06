@@ -1,280 +1,91 @@
 # Design Decisions
 
-This document captures the key architectural and engineering decisions made during the implementation of the System Health Check API.
+This document records the key engineering choices made for the System Health Check API.
 
-The goal was to deliver a production-oriented MVP within the assignment time constraints while demonstrating sound software engineering, platform engineering, and AI SRE practices.
+## FastAPI
 
----
+**Decision:** Use FastAPI for the REST API.
 
-# DD-001: FastAPI as the REST Framework
+**Rationale:** It provides async-native request handling, strong Pydantic integration, and a clean developer experience for a small production-oriented service.
 
-## Decision
+**Tradeoff:** FastAPI is more opinionated than lighter frameworks, but the reduced boilerplate and built-in validation are worth it.
 
-Use FastAPI to implement the REST API.
+## Pydantic
 
-## Rationale
+**Decision:** Use Pydantic for request and response models.
 
-- Native asynchronous support
-- Excellent Pydantic integration
-- Automatic OpenAPI documentation
-- High performance for I/O-bound workloads
-- Excellent developer experience
+**Rationale:** It enforces schema validation, simplifies serialization, and keeps API contracts explicit.
 
-## Tradeoff
+**Tradeoff:** Validation adds a small runtime cost, which is acceptable for this workload.
 
-FastAPI is slightly more opinionated than Flask but significantly reduces boilerplate and improves maintainability.
+## NetworkX
 
----
+**Decision:** Use NetworkX to represent and validate dependency graphs.
 
-# DD-002: Google Cloud Run for Deployment
+**Rationale:** It provides reliable DAG handling, cycle detection, and graph traversal without custom graph-engine code.
 
-## Decision
+**Tradeoff:** It adds an external dependency, but it improves correctness and reduces implementation risk.
 
-Target Google Cloud Run as the deployment platform.
+## Breadth First Search
 
-## Rationale
+**Decision:** Traverse dependency graphs with Breadth First Search.
 
-- Fully managed serverless runtime
-- Automatic scaling
-- Native integration with Cloud Logging and Cloud Monitoring
-- Lower operational overhead than Kubernetes
-- Well suited for stateless REST APIs
+**Rationale:** BFS provides a predictable execution order for dependency trees and is easy to reason about during debugging.
 
-## Tradeoff
+**Tradeoff:** DFS could also work, but BFS is more intuitive for component-level evaluation.
 
-Provides less infrastructure control than GKE but greatly simplifies operations for this assignment.
+## asyncio
 
----
+**Decision:** Execute health checks concurrently with `asyncio`.
 
-# DD-003: Pydantic for API Contracts
+**Rationale:** Health checks are network-bound, so concurrency reduces total request time and improves throughput.
 
-## Decision
+**Tradeoff:** Async orchestration is slightly more complex than sequential code, but the performance benefit is significant.
 
-Use Pydantic models for request and response validation.
+## httpx.AsyncClient
 
-## Rationale
+**Decision:** Use `httpx.AsyncClient` for outbound component checks.
 
-- Strong type validation
-- Automatic serialization
-- Automatic OpenAPI schema generation
-- Improved developer experience
+**Rationale:** It is a modern async HTTP client with good timeout handling and connection reuse.
 
-## Tradeoff
+**Tradeoff:** It requires careful timeout and exception handling, but it fits the asynchronous API model well.
 
-Small runtime validation overhead, acceptable for API workloads.
+## Stateless Request Processing
 
----
+**Decision:** Keep aggregation and orchestration request-scoped and in memory.
 
-# DD-004: Dependency Graph Validation
+**Rationale:** The assignment does not require persistence, and stateless processing fits Cloud Run well.
 
-## Decision
+**Tradeoff:** The service does not retain historical health data, which would require external storage in a production expansion.
 
-Validate the dependency graph before executing any health checks.
+## Prometheus Metrics
 
-## Rationale
+**Decision:** Expose application metrics with Prometheus.
 
-- Fail fast
-- Prevent invalid execution plans
-- Detect configuration errors early
-- Improve API reliability
+**Rationale:** Metrics provide visibility into request volume, latency, and component health, and integrate well with Google Cloud observability.
 
-## Tradeoff
+**Tradeoff:** Only core metrics are implemented to keep the solution focused.
 
-Adds a small validation step before execution.
+## Cloud Run
 
----
+**Decision:** Deploy the application to Google Cloud Run.
 
-# DD-005: NetworkX for Graph Processing
+**Rationale:** Cloud Run provides managed scaling, low operational overhead, and a strong fit for stateless HTTP services.
 
-## Decision
+**Tradeoff:** It offers less infrastructure control than Kubernetes, but that is a benefit here because the assignment favors simplicity.
 
-Use NetworkX to represent and traverse the dependency graph.
+## Docker
 
-## Rationale
+**Decision:** Package the application as a container image.
 
-- Mature graph library
-- Reliable DAG validation
-- Built-in traversal algorithms
-- Reduces custom implementation complexity
+**Rationale:** Containers provide reproducible builds and make the service portable across local development and Cloud Run.
 
-## Tradeoff
+**Tradeoff:** Containerization adds a small build step, but it standardizes runtime behavior and deployment.
 
-Introduces a lightweight dependency but significantly improves correctness and maintainability.
+## GitHub Actions
 
----
+**Decision:** Use GitHub Actions for CI.
 
-# DD-006: Breadth First Search (BFS)
+**Rationale:** It provides a straightforward, repository-native pipeline for tests, linting, and image builds.
 
-## Decision
-
-Use Breadth First Search to traverse the dependency graph.
-
-## Rationale
-
-- Deterministic traversal order
-- Easy to understand
-- Suitable for dependency-level processing
-- Simplifies operational troubleshooting
-
-## Tradeoff
-
-Depth First Search would also satisfy the assignment, but BFS provides a more intuitive execution order for dependency graphs.
-
----
-
-# DD-007: Separation of Responsibilities
-
-## Decision
-
-Separate graph construction, validation, and traversal into independent methods.
-
-## Rationale
-
-- Easier unit testing
-- Better maintainability
-- Cleaner architecture
-- Reusable graph engine independent of API transport
-
-## Tradeoff
-
-Slightly more code but significantly clearer responsibilities.
-
----
-
-# DD-008: Developer Experience First
-
-## Decision
-
-Invest in developer tooling early.
-
-## Rationale
-
-The project includes:
-
-- Bootstrap script
-- Makefile
-- Docker
-- GitHub Actions
-- Terraform scaffold
-
-This allows contributors to bootstrap the project quickly while ensuring consistent local development and CI execution.
-
-## Tradeoff
-
-A small upfront investment in tooling significantly improves maintainability and onboarding.
-
----
-
-# DD-009: Platform Engineering Approach
-
-## Decision
-
-Prefer managed Google Cloud services over self-managed infrastructure.
-
-## Rationale
-
-The objective is to demonstrate platform engineering principles rather than infrastructure management.
-
-Examples include:
-
-- Cloud Run
-- Artifact Registry
-- GitHub Actions
-- Cloud Logging
-- Cloud Monitoring
-
-## Tradeoff
-
-Reduced infrastructure flexibility in exchange for lower operational complexity.
-
----
-
-# DD-010: Observability by Design
-
-## Decision
-
-Build observability into the application from the beginning.
-
-## Rationale
-
-The application includes:
-
-- Structured logging
-- Health endpoints
-- Prometheus metrics (planned)
-- Cloud Logging compatibility
-
-Future enhancements include:
-
-- OpenTelemetry
-- Cloud Trace
-- Managed Prometheus
-- SLO dashboards
-
-## Tradeoff
-
-Only foundational observability is implemented to remain within the assignment time budget.
-
-# DD-011: Asynchronous Health Checks
-
-## Decision
-
-Execute component health checks concurrently using `asyncio` and `httpx.AsyncClient`.
-
-## Rationale
-
-Health checks are network-bound, I/O-intensive operations. Running them concurrently significantly reduces total evaluation time compared to sequential execution while improving throughput and resource utilization.
-
-Using `httpx.AsyncClient` provides efficient connection management and aligns with FastAPI's asynchronous execution model.
-
-## Tradeoff
-
-Concurrent execution introduces additional complexity around timeout handling and exception management. However, the performance benefits outweigh the implementation complexity for dependency-based health evaluation services.
-
-Future production enhancements may include configurable retry policies, exponential backoff, adaptive concurrency, and circuit breaker patterns.
-
-# DD-012: Request-Scoped Aggregation
-
-### Decision
-
-Aggregate health results entirely in memory for each request.
-
-### Rationale
-
-The assignment does not require persistence. Request-scoped aggregation keeps the implementation stateless, simplifies deployment on Cloud Run, and avoids unnecessary operational complexity.
-
-### Tradeoff
-
-Historical health trends are not retained. A production implementation could persist results to BigQuery, Cloud SQL, or Firestore for analytics and reporting.
-
-# DD-013: Thin API Layer
-
-## Decision
-
-Keep the REST API responsible only for request validation, workflow orchestration, and HTTP response generation.
-
-## Rationale
-
-Business logic remains encapsulated within the DependencyGraph, HealthChecker, and HealthAggregator components.
-
-This minimizes coupling between transport and domain logic while avoiding unnecessary architectural layers.
-
-## Tradeoff
-
-The API performs lightweight orchestration, which is appropriate for the scope of this assignment. A larger system might introduce an application service layer if additional workflows emerged.
-
-# DD-014: Prometheus Metrics
-
-## Decision
-
-Expose application metrics using Prometheus.
-
-## Rationale
-
-Metrics provide visibility into API traffic, request latency, component health, and dependency performance.
-
-The implementation is compatible with Google Cloud Managed Prometheus and Cloud Monitoring.
-
-## Tradeoff
-
-Only foundational metrics are implemented to remain within the assignment scope.
+**Tradeoff:** It is less customizable than a full internal CI platform, but it is sufficient for a take-home assignment and easy to review.

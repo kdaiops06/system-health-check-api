@@ -32,3 +32,12 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t system-health-check-api:ci .
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Validate Terraform
+        run: |
+          cd terraform
+          terraform init -backend=false
+          terraform validate

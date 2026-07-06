@@ -1,157 +1,32 @@
 # System Health Check API
 
-A production-oriented Python REST API that evaluates the health of interconnected system components represented as a Directed Acyclic Graph (DAG).
+A production-oriented Google Cloud Platform Engineering / AI SRE take-home assignment that evaluates the health of interconnected services represented as a Directed Acyclic Graph (DAG).
 
-This project was developed as part of a Platform Engineering / AI SRE take-home assignment with a focus on software engineering quality, cloud-native architecture, observability, developer experience, and maintainability.
+## Executive Summary
 
----
+This project delivers a FastAPI-based REST API that validates dependency graphs, traverses them with Breadth First Search, executes asynchronous health checks, aggregates results, and exposes Prometheus metrics for operational visibility. The application is designed for Google Cloud Run and deployed with Terraform and GitHub Actions.
 
-# Executive Summary
+## Problem Statement
 
-The objective is to build a REST API capable of evaluating the health of systems composed of multiple dependent services.
+Build a service that accepts a dependency graph, validates it, executes health checks across the dependency tree, and returns a reliable system health response with production-grade observability and developer experience.
 
-Each service is represented as a node in a Directed Acyclic Graph (DAG), where dependency relationships are modeled as graph edges.
+## Solution Overview
 
-The API validates the graph, traverses it using Breadth First Search (BFS), performs asynchronous health checks, aggregates overall system health, and returns both machine-readable and human-readable results.
+The API receives a `HealthCheckRequest`, builds and validates the DAG, discovers root nodes, traverses each dependency tree with BFS, resolves node IDs into component objects, performs concurrent HTTP health checks, aggregates component health, and returns a `HealthCheckResponse`.
 
-The implementation intentionally emphasizes production engineering principles rather than unnecessary architectural complexity.
+## Architecture
 
----
-
-# Problem Statement
-
-Implement a REST API that:
-
-- Accepts a JSON representation of a dependency graph
-- Validates graph correctness
-- Detects dependency cycles
-- Traverses the graph using Breadth First Search (BFS)
-- Executes asynchronous health checks
-- Aggregates overall system health
-- Returns JSON and table-based results
-- Demonstrates production-ready engineering practices
-
----
-
-# Current Implementation Status
-
-## ✅ Phase 0 – Project Foundation
-
-Completed
-
-- Project structure
-- Bootstrap script
-- Makefile
-- Dockerfile
-- GitHub Actions CI
-- Terraform scaffold
-- CODEOWNERS
-- Pull Request template
-- Python package structure
-
----
-
-## ✅ Phase 1 – FastAPI Foundation
-
-Completed
-
-- FastAPI application
-- Configuration management
-- Structured logging
-- Application startup
-- Health endpoints
-
-Available endpoints
-
-- GET /
-- GET /health
-- GET /live
-- GET /ready
-
----
-
-## ✅ Phase 2 – Domain Models
-
-Completed
-
-- Request models
-- Response models
-- Pydantic validation
-- Unit tests
-
----
-
-## ✅ Phase 3 – Dependency Graph Engine
-
-Completed
-
-Features
-
-- Directed graph construction
-- DAG validation
-- Cycle detection
-- Root node discovery
-- Breadth First Search traversal
-- NetworkX integration
-- Unit tests
-
----
-
-## 🚧 Phase 4 – Async Health Checker
-
-In Progress
-
-Implementation
-
-- asyncio
-- httpx.AsyncClient
-- Concurrent health checks
-- Configurable timeout
-- Response latency measurement
-
----
-
-## ⏳ Remaining Milestones
-
-- Health aggregation
-- Human-readable table output
-- API orchestration
-- Prometheus metrics
-- Cloud Run deployment
-- Terraform completion
-- Documentation
-- Optional DAG visualization
-
----
-
-# Current Architecture
-
-```
-                    Client
-                       │
-                       ▼
-                 FastAPI API
-                       │
-                       ▼
-            HealthCheckService
-                       │
-         ┌─────────────┴─────────────┐
-         ▼                           ▼
- DependencyGraph              HealthChecker
-         │                           │
-         └─────────────┬─────────────┘
-                       ▼
-              HealthAggregator
-                       │
-                       ▼
-          JSON + Human Readable Table
+```mermaid
+flowchart LR
+  Client --> API[FastAPI Router]
+  API --> DAG[DependencyGraph]
+  DAG --> HC[HealthChecker]
+  HC --> AGG[HealthAggregator]
+  API --> MET[Prometheus /metrics]
+  API --> LOG[Structured Logging]
 ```
 
----
-
-# Technology Stack
-
-## Application
+## Technology Stack
 
 - Python 3.12
 - FastAPI
@@ -160,204 +35,161 @@ Implementation
 - asyncio
 - httpx
 - tabulate
-
-## Platform Engineering
-
+- prometheus_client
 - Docker
 - Terraform
-- GitHub Actions
-- Cloud Run
+- Google Cloud Run
 - Artifact Registry
+- GitHub Actions
+
+## Project Structure
+
+- `app/` - API, domain models, graph engine, health checker, aggregation, metrics, and logging
+- `tests/` - pytest unit and API tests
+- `terraform/` - Google Cloud provider, Cloud Run, and Artifact Registry configuration
+- `scripts/` - bootstrap helper
+- `examples/` - sample request payloads
+- `docs/` - design decisions and supporting documentation
+
+## Assumptions
+
+- Incoming graphs must be valid DAGs.
+- Health checks are request-scoped and stateless.
+- Cloud Run is the target runtime.
+- Google-managed services are preferred over self-managed infrastructure.
+- Persistence, retries, and distributed state are intentionally out of scope for the assignment.
+
+## Features Implemented
+
+- FastAPI REST API
+- DAG validation and BFS traversal
+- Concurrent asynchronous health checks
+- Health aggregation and summary output
+- Structured logging
+- Prometheus metrics endpoint
+- Docker image build
+- Terraform deployment for Cloud Run and Artifact Registry
+- GitHub Actions CI
+- Unit and endpoint tests
+
+## Features Intentionally Excluded
+
+- Authentication and authorization
+- Database persistence
+- GKE or self-managed Kubernetes
+- VPC and Cloud SQL
+- Retry policies and circuit breakers
+- Distributed caching
+- Multi-region deployment
+- OpenTelemetry implementation
+- AI-driven root cause analysis
+
+## Design Decisions
+
+- **FastAPI** for async-native request handling and Pydantic integration.
+- **NetworkX** for DAG validation and traversal.
+- **asyncio + httpx.AsyncClient** for concurrent component checks.
+- **tabulate** for a human-readable component table.
+- **Prometheus metrics** for request and health-check observability.
+- **Cloud Run + Artifact Registry** for a managed, low-ops deployment model.
+- **Terraform** for repeatable infrastructure provisioning.
+- **GitHub Actions** for CI automation.
+
+## Tradeoffs
+
+- In-memory aggregation keeps the service simple but does not retain history.
+- A single-region Cloud Run deployment reduces operational overhead but limits regional redundancy.
+- The implementation favors clarity and maintainability over advanced resiliency patterns such as retries or circuit breakers.
 
 ## Observability
 
-Current
+- **Structured Logging** with a `component` field for application logs
+- **Prometheus Metrics** exposed at `/metrics`
+- Counters: `api_requests_total`, `health_checks_total`
+- Histograms: `api_request_duration_seconds`, `health_check_duration_seconds`
+- Gauges: `healthy_components`, `unhealthy_components`
+- Cloud Run compatible stdout logging for centralized collection
 
-- Structured logging
-- Health endpoints
+## AI Usage
 
-Planned
+GitHub Copilot was used for boilerplate implementation, refactoring, and unit tests.
 
-- Prometheus metrics
-- Cloud Monitoring
-- Cloud Logging
-- OpenTelemetry (future)
+ChatGPT was used for architecture reviews, documentation, Terraform review, CI/CD review, design tradeoffs, and code review guidance.
 
----
+All AI-generated code was manually reviewed, tested, modified where appropriate, and fully understood before being committed.
 
-# Engineering Principles
+## Developer Experience
 
-This implementation intentionally prioritizes
+- `make bootstrap` - create the virtual environment, install dependencies, and initialize local configuration
+- `make run` - start the API locally with Uvicorn
+- `make test` - run the test suite
+- `make docker` - build the container image
 
-- Simplicity
-- Maintainability
-- Production readiness
-- Google Cloud managed services
-- Developer Experience
-- Infrastructure as Code
-- Observability
-- Platform Engineering best practices
+The bootstrap script targets Python 3.12 and creates `.env` from `.env.example` when needed.
 
----
+## Local Development
 
-# Features Implemented
+```bash
+make bootstrap
+source .venv/bin/activate
+make run
+```
 
-- FastAPI REST API
-- Configuration management
-- Structured logging
-- Health endpoints
-- Request validation
-- Dependency graph construction
-- DAG validation
-- Cycle detection
-- Breadth First Search traversal
-- Docker support
-- GitHub Actions CI
-- Terraform project scaffold
+Useful commands:
 
----
+```bash
+make test
+make docker
+```
 
-# Features Planned
+## Testing
 
-- Concurrent asynchronous health checks
-- Health aggregation
-- Human-readable table output
-- Prometheus metrics
-- Cloud Run deployment
-- Artifact Registry deployment
-- End-to-end API workflow
+The repository uses pytest for unit and API tests. Coverage includes DAG validation, health checking, aggregation, metrics exposure, and FastAPI endpoint behavior.
+
+## Docker
+
+Build the container image locally:
+
+```bash
+make docker
+```
+
+Run the container:
+
+```bash
+docker run --rm -p 8080:8080 system-health-check-api
+```
+
+## Terraform Deployment
+
+Terraform provisions the Google Cloud resources required for deployment:
+
+- Google provider configured from `project_id` and `region`
+- Artifact Registry Docker repository
+- Cloud Run service
+- Public Cloud Run access for unauthenticated requests
+
+Apply the infrastructure from the `terraform/` directory:
+
+```bash
+cd terraform
+terraform init
+terraform plan
+terraform apply
+```
+
+Outputs include the Cloud Run URL and the Artifact Registry repository name.
+
+## CI/CD Pipeline
+
+GitHub Actions runs the automated CI workflow on push and pull request events. The pipeline installs dependencies, runs `ruff`, runs `pytest`, and builds the Docker image. This keeps the repository reviewable and production-ready without adding deployment automation.
+
+## Future Enhancements
+
+- Retries with exponential backoff
+- Circuit breaker support
+- Distributed tracing with OpenTelemetry
+- Cloud Monitoring dashboards and alerting
 - Optional DAG visualization
-
----
-
-# Assumptions
-
-- Input graph must be a Directed Acyclic Graph (DAG).
-- Cyclic graphs return HTTP 400.
-- Health checks are request scoped.
-- No persistence is required.
-- Cloud Run is the target runtime environment.
-- Google managed services are preferred over self-managed infrastructure.
-
----
-
-# Features Intentionally Excluded
-
-To keep the implementation focused within the assignment time constraints, the following capabilities are intentionally excluded:
-
-- Authentication
-- Authorization
-- Database persistence
-- Kubernetes (GKE)
-- Retry policies
-- Circuit breakers
-- Distributed cache
-- Multi-region deployment
-- AI Root Cause Analysis
-- AI Agents
-- OpenTelemetry implementation
-
-These are documented as future enhancements.
-
----
-
-# Observability
-
-Current implementation
-
-- Structured application logging
-- Health endpoints
-- Cloud Logging compatible output
-
-Planned
-
-- Prometheus metrics
-- Request latency metrics
-- Health check latency metrics
-- Component health metrics
-
-Future
-
-- OpenTelemetry
-- Cloud Trace
-- SLO dashboards
-- Error budgets
-
----
-
-# AI Usage
-
-AI tools were used to improve developer productivity while maintaining engineering ownership.
-
-GitHub Copilot
-
-- Boilerplate generation
-- Test generation
-- Async implementation
-- Terraform scaffolding
-
-ChatGPT
-
-- Architecture review
-- Platform engineering guidance
-- Design decisions
-- Documentation
-- CI/CD review
-- Code review
-
-All AI-generated code and recommendations were manually reviewed, tested, modified where appropriate, and fully understood before being committed.
-
----
-
-# Project Status
-
-Current Progress
-
-```
-████████████░░░░░░░░ 60%
-
-✅ Foundation
-✅ FastAPI
-✅ Configuration
-✅ Logging
-✅ Models
-✅ Dependency Graph
-🚧 Async Health Checker
-⬜ Aggregator
-⬜ Service
-⬜ API
-⬜ Metrics
-⬜ Terraform
-⬜ Documentation
-```
-
-The remaining work focuses on integrating asynchronous health evaluation, system health aggregation, observability, deployment, and final documentation.
-
-## Current Progress
-
-- ✅ Foundation
-- ✅ FastAPI
-- ✅ Configuration
-- ✅ Logging
-- ✅ API Models
-- ⏳ DAG Engine
-- ⏳ Async Health Checks
-- ⏳ Aggregation
-- ⏳ Metrics
-- ⏳ Terraform Deployment
-
-Current
-
-- Structured logging
-- Health endpoints
-- Prometheus metrics
-- Cloud Logging compatible
-
-Future
-
-- Managed Prometheus
-- Cloud Monitoring dashboards
-- Alert Policies
-- Cloud Trace
-- OpenTelemetry
-
+- Historical persistence for health trends
+- Additional policy controls for production hardening
