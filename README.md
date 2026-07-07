@@ -23,7 +23,6 @@ This project was developed as a take-home assignment for a **Senior Google Cloud
 - ✅ Local Prometheus + Grafana monitoring stack
 - ✅ Unit tests with pytest
 
----
 
 # Assignment Goals
 
@@ -42,13 +41,9 @@ This implementation addresses the requested deliverables by providing:
 - Cloud Run deployment
 - Comprehensive documentation covering assumptions, design decisions, tradeoffs, and future enhancements
 
----
-
 # Problem Statement
 
 Build an API that accepts a Directed Acyclic Graph (DAG) describing dependent system components, evaluates the health of each component asynchronously, and returns an aggregated health summary suitable for operational use.
-
----
 
 # Solution Overview
 
@@ -63,7 +58,7 @@ The application performs the following workflow:
 7. Aggregate component health.
 8. Return a concise system health summary.
 
----# Features Implemented
+# Features Implemented
 
 - DAG construction and validation
 - Cycle detection
@@ -78,7 +73,7 @@ The application performs the following workflow:
 - Local Prometheus and Grafana monitoring
 - Unit test coverage
 
-## Intentionally Out of Scope
+# Intentionally Out of Scope
 
 The following capabilities were intentionally excluded to keep the implementation focused on the assignment:
 
@@ -93,8 +88,6 @@ The following capabilities were intentionally excluded to keep the implementatio
 - Multi-region deployment
 - AI-assisted remediation
 
-
----
 
 # Architecture
 
@@ -142,8 +135,6 @@ More detailed architecture diagrams are available in:
 docs/architecture.md
 ```
 
----
-
 # Technology Stack
 
 | Layer | Technology |
@@ -161,7 +152,6 @@ docs/architecture.md
 | Registry | Artifact Registry |
 | CI/CD | GitHub Actions |
 
----
 
 # Repository Structure
 
@@ -176,7 +166,6 @@ examples/       Sample requests
 scripts/        Helper scripts
 ```
 
----
 # API Endpoints
 
 | Endpoint | Description |
@@ -188,7 +177,6 @@ scripts/        Helper scripts
 | `GET /metrics` | Prometheus metrics |
 | `GET /docs` | Swagger UI |
 
----
 
 # Quick Start
 
@@ -346,7 +334,6 @@ Deployment target:
 
 Container images are built with Docker and pushed to Artifact Registry before deployment.
 
----
 
 # Observability
 
@@ -374,8 +361,6 @@ The Grafana dashboard visualizes:
 - Component health
 - Error ratio
 
----
-
 # Additional Documentation
 
 Additional documentation is available in:
@@ -384,8 +369,6 @@ Additional documentation is available in:
 - `docs/design-decisions.md`
 - `docs/platform-considerations.md`
 - `docs/demo-guide.md`
-
----
 
 # Assignment Goals
 
@@ -404,15 +387,11 @@ This implementation addresses the requested deliverables by providing:
 - Cloud Run deployment
 - Comprehensive documentation covering assumptions, design decisions, tradeoffs, and future enhancements
 
----
-
 # Tradeoffs
 
 - Cloud Run minimizes operational overhead compared to Kubernetes.
 - In-memory aggregation simplifies the implementation but does not retain historical state.
 - BFS provides a clear dependency traversal strategy suitable for this use case.
-
----
 
 # AI Usage
 
@@ -435,8 +414,6 @@ AI tools were used to accelerate development while maintaining engineering owner
 
 All AI-generated suggestions were manually reviewed, validated, tested, and modified where appropriate before being committed.
 
----
-
 # Future Enhancements
 
 - Retry policies
@@ -448,8 +425,6 @@ All AI-generated suggestions were manually reviewed, validated, tested, and modi
 - Vertex AI-assisted incident analysis
 - AI-generated operational runbooks
 - Multi-region deployment
-
----
 
 # License
 
