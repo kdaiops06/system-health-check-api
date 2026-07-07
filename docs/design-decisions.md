@@ -1,99 +1,278 @@
 # Design Decisions
 
-This document summarizes the core engineering choices made for the System Health Check API.
+This document captures the key engineering decisions, assumptions, tradeoffs, and scope choices made while implementing the **System Health Check API**. The assignment was intentionally open-ended, so several implementation decisions were made to balance correctness, maintainability, and delivery within the expected time.
+
+---
+
+# Engineering Assumptions
+
+The following assumptions were made while interpreting the problem statement.
+
+## Graph Assumptions
+
+- The input represents a valid Directed Acyclic Graph (DAG).
+- Each component has a unique identifier.
+- All dependency edges reference existing nodes.
+- Cyclic graphs are considered invalid and are rejected during validation.
+
+## Health Check Assumptions
+
+- Every component exposes an HTTP endpoint that can be queried.
+- HTTP 200 indicates a healthy component.
+- Any non-200 response, timeout, or network failure is considered unhealthy.
+- Health evaluation is request-scoped and does not rely on historical state.
+
+## Platform Assumptions
+
+- The service is stateless.
+- Cloud Run is the preferred deployment target.
+- Google-managed services are preferred over self-managed infrastructure.
+- Prometheus is used for metrics collection and Grafana for visualization.
+
+---
+
+# Scope Decisions
+
+The assignment was intentionally scoped to deliver a production-oriented MVP.
+
+The following capabilities were intentionally excluded:
+
+- Authentication and authorization
+- Persistent storage
+- Historical health reporting
+- Retry policies
+- Circuit breakers
+- Distributed tracing
+- Background scheduling
+- Service discovery
+- Multi-region deployment
+- AI-assisted remediation
+
+These capabilities are documented as future enhancements rather than implemented to keep the solution focused on the assignment objectives.
+
+---
+
+# Design Decisions
 
 ## FastAPI
 
-**Decision:** Use FastAPI for the REST API.
+**Decision**
 
-**Reason:** It provides async-native request handling, strong validation support, and a concise programming model for a small production MVP.
+Use FastAPI for the REST API.
 
-**Tradeoff:** FastAPI is more opinionated than a minimal framework, but it reduces boilerplate and improves maintainability.
+**Reason**
+
+FastAPI provides asynchronous request handling, automatic OpenAPI documentation, and strong request validation with minimal boilerplate.
+
+**Tradeoff**
+
+FastAPI is more opinionated than lightweight frameworks but significantly improves maintainability and developer productivity.
+
+---
 
 ## Pydantic
 
-**Decision:** Use Pydantic for request and response models.
+**Decision**
 
-**Reason:** It gives explicit contracts, schema validation, and predictable serialization for API payloads.
+Use Pydantic models for request and response validation.
 
-**Tradeoff:** Validation adds a small runtime cost, which is acceptable for this service.
+**Reason**
+
+Explicit schemas improve API correctness, simplify serialization, and automatically generate OpenAPI documentation.
+
+**Tradeoff**
+
+Validation introduces a small runtime overhead that is acceptable for this workload.
+
+---
 
 ## NetworkX
 
-**Decision:** Use NetworkX for DAG modeling and validation.
+**Decision**
 
-**Reason:** It provides reliable graph primitives, cycle detection, and traversal without custom graph-engine code.
+Use NetworkX to model and validate the dependency graph.
 
-**Tradeoff:** It adds an external dependency, but it reduces implementation risk.
+**Reason**
 
-## Breadth First Search
+It provides mature graph algorithms, DAG validation, cycle detection, and traversal utilities without requiring custom graph implementations.
 
-**Decision:** Traverse the graph with Breadth First Search.
+**Tradeoff**
 
-**Reason:** BFS provides a clear and deterministic order for dependency evaluation.
+Adds a dependency but significantly reduces implementation complexity and risk.
 
-**Tradeoff:** DFS would also work, but BFS is easier to reason about when validating dependency trees.
+---
+
+## Breadth-First Search (BFS)
+
+**Decision**
+
+Traverse dependencies using Breadth-First Search.
+
+**Reason**
+
+BFS evaluates dependencies in a deterministic level-by-level order, making execution flow easier to understand and extend.
+
+**Tradeoff**
+
+Depth-First Search would also satisfy the assignment, but BFS provides clearer execution ordering for dependency graphs.
+
+---
 
 ## asyncio
 
-**Decision:** Run health checks concurrently with asyncio.
+**Decision**
 
-**Reason:** Component checks are network-bound, so concurrency improves throughput and reduces total request time.
+Execute health checks concurrently using asyncio.
 
-**Tradeoff:** Async orchestration is slightly more complex than sequential code.
+**Reason**
+
+Component health checks are network-bound operations. Asynchronous execution reduces total request latency without increasing infrastructure complexity.
+
+**Tradeoff**
+
+Async programming introduces additional complexity compared to sequential execution.
+
+---
 
 ## httpx
 
-**Decision:** Use httpx.AsyncClient for outbound checks.
+**Decision**
 
-**Reason:** It is a modern async HTTP client with connection pooling and straightforward timeout handling.
+Use httpx.AsyncClient for outbound HTTP requests.
 
-**Tradeoff:** It requires explicit timeout and exception management.
+**Reason**
+
+Provides native async support, connection pooling, configurable timeouts, and a clean API.
+
+**Tradeoff**
+
+Requires explicit timeout configuration and exception handling.
+
+---
 
 ## Cloud Run
 
-**Decision:** Deploy the application on Cloud Run.
+**Decision**
 
-**Reason:** It is a managed, stateless HTTP runtime that fits the assignment’s operational scope and keeps the platform surface small.
+Deploy the application on Google Cloud Run.
 
-**Tradeoff:** It offers less infrastructure control than Kubernetes, which is acceptable for this workload.
+**Reason**
+
+Cloud Run is a fully managed serverless platform that aligns well with the stateless nature of the application while minimizing operational overhead.
+
+**Tradeoff**
+
+Provides less infrastructure control than Kubernetes but significantly reduces operational complexity for this use case.
+
+---
 
 ## Terraform
 
-**Decision:** Manage infrastructure with Terraform.
+**Decision**
 
-**Reason:** It makes the deployment reproducible, reviewable, and easy to understand in a platform engineering review.
+Provision infrastructure using Terraform.
 
-**Tradeoff:** It introduces a small amount of IaC overhead, which is worth the clarity it provides.
+**Reason**
+
+Infrastructure as Code provides repeatable, version-controlled deployments and aligns with Platform Engineering best practices.
+
+**Tradeoff**
+
+Adds Infrastructure as Code maintenance but greatly improves reproducibility and reviewability.
+
+---
 
 ## Docker
 
-**Decision:** Package the service in Docker.
+**Decision**
 
-**Reason:** Containers make local execution and Cloud Run deployment consistent.
+Package the application as a Docker container.
 
-**Tradeoff:** It adds a build step, but it standardizes the runtime environment.
+**Reason**
+
+Containers provide a consistent runtime across development, testing, and production while simplifying Cloud Run deployments.
+
+**Tradeoff**
+
+Introduces an image build step but standardizes execution environments.
+
+---
 
 ## Prometheus
 
-**Decision:** Expose metrics with Prometheus.
+**Decision**
 
-**Reason:** It is a simple and widely used metrics format for request volume, latency, and component health.
+Expose operational metrics using Prometheus.
 
-**Tradeoff:** The implementation intentionally stays minimal and does not include advanced telemetry pipelines.
+**Reason**
+
+Prometheus is the industry standard for cloud-native metrics and integrates naturally with Grafana and Google Managed Prometheus.
+
+**Tradeoff**
+
+The implementation focuses on core operational metrics and intentionally excludes advanced telemetry pipelines.
+
+---
 
 ## Grafana
 
-**Decision:** Use Grafana for dashboard visualization.
+**Decision**
 
-**Reason:** It provides a clear operational view of the application metrics and supports reviewer-friendly observability.
+Provide a Grafana dashboard for operational visualization.
 
-**Tradeoff:** A dashboard adds a small amount of setup, but it improves the submission significantly.
+**Reason**
+
+Dashboards improve observability by visualizing request throughput, latency, and component health during local validation.
+
+**Tradeoff**
+
+Requires additional setup but significantly improves the reviewer experience and operational visibility.
+
+---
 
 ## GitHub Actions
 
-**Decision:** Use GitHub Actions for CI.
+**Decision**
 
-**Reason:** It is easy to review, repository-native, and sufficient for linting, tests, Docker builds, and Terraform validation.
+Use GitHub Actions for Continuous Integration.
 
-**Tradeoff:** It is not as customizable as a larger internal CI platform, but it is appropriate for this project.
+**Reason**
+
+GitHub Actions is repository-native and provides sufficient capabilities for linting, testing, Docker builds, and Terraform validation.
+
+**Tradeoff**
+
+Less customizable than enterprise CI platforms but appropriate for the assignment scope.
+
+---
+
+# Key Tradeoffs
+
+Several tradeoffs were made intentionally.
+
+| Decision | Benefit | Tradeoff |
+|-----------|---------|----------|
+| Cloud Run | Minimal operational overhead | Less infrastructure control than Kubernetes |
+| BFS | Simple and deterministic traversal | DFS could also satisfy the requirement |
+| In-memory aggregation | Simpler implementation | No historical persistence |
+| Async HTTP | Better performance for I/O workloads | Increased implementation complexity |
+| Prometheus | Standard cloud-native metrics | No distributed tracing |
+
+---
+
+# Production Considerations
+
+For a production deployment, the following enhancements would be considered:
+
+- Retry policies with exponential backoff
+- Circuit breakers
+- OpenTelemetry
+- Google Cloud Trace
+- Google Cloud Monitoring dashboards
+- Alerting policies
+- SLOs, SLIs, and Error Budgets
+- AI-assisted incident summarization
+- Vertex AI-based root cause analysis
+- Multi-region deployment
+- Service-to-service authentication
+- Historical health persistence
