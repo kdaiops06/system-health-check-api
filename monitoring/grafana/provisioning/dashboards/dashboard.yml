@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: system-health-dashboard
+    orgId: 1
+    folder: System Health
+    type: file
+    disableDeletion: false
+    editable: false
+    updateIntervalSeconds: 10
+    options:
+      path: /var/lib/grafana/dashboards

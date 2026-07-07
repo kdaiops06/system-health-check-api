@@ -1,63 +1,48 @@
 # Architecture
 
-## Overview
+## Application Architecture
 
-The System Health Check API is a FastAPI service that accepts a dependency graph, validates it, traverses component relationships, performs asynchronous health checks, and returns an aggregated JSON response.
-
-## Application Flow
-
-```text
-Client
-  ↓
-FastAPI
-  ↓
-Request Validation
-  ↓
-DependencyGraph
-  ↓
-Breadth First Search
-  ↓
-Async Health Checker
-  ↓
-Health Aggregator
-  ↓
-JSON Response
+```mermaid
+flowchart TD
+  Client --> FastAPI
+  FastAPI --> RequestValidation
+  RequestValidation --> DependencyGraph
+  DependencyGraph --> BFS
+  BFS --> AsyncHealthChecker
+  AsyncHealthChecker --> Aggregator
+  Aggregator --> JSONResponse
 ```
 
-### Flow Notes
+The application is intentionally thin at the API layer. FastAPI handles request routing and validation, while the graph, checker, and aggregator components own the domain logic.
 
-- **FastAPI** handles request routing and schema validation.
-- **DependencyGraph** validates DAG structure, detects cycles, and identifies root nodes.
-- **Breadth First Search** preserves dependency order while avoiding duplicate execution.
-- **Async Health Checker** performs concurrent HTTP checks using `httpx.AsyncClient`.
-- **Health Aggregator** summarizes component results and produces the final response.
+## Infrastructure Architecture
 
-## Google Cloud Deployment
-
-```text
-GitHub
-  ↓
-GitHub Actions
-  ↓
-Artifact Registry
-  ↓
-Cloud Run
-  ↓
-Cloud Logging
-  ↓
-Cloud Monitoring
+```mermaid
+flowchart TD
+  GitHub --> GitHubActions
+  GitHubActions --> DockerBuild
+  DockerBuild --> ArtifactRegistry
+  ArtifactRegistry --> CloudRun
+  CloudRun --> Prometheus
+  Prometheus --> Grafana
 ```
 
-### Deployment Notes
-
-- **GitHub Actions** builds and validates the application in CI.
-- **Artifact Registry** stores the container image produced by the build.
-- **Cloud Run** deploys the container as a managed, stateless HTTP service.
-- **Cloud Logging** captures application logs from standard output.
-- **Cloud Monitoring** provides operational visibility and alerting.
+GitHub Actions provides repeatable CI. Terraform provisions the Google Cloud resources. Docker packages the application for Cloud Run. Grafana visualizes Prometheus metrics from the application.
 
 ## Why Cloud Run Instead of Kubernetes
 
-Cloud Run was selected because the workload is a stateless REST API with a small operational footprint. It provides managed autoscaling, simple deployment, and lower maintenance overhead than Kubernetes.
+Cloud Run was selected because the workload is a stateless HTTP API with a small operational footprint. It provides managed autoscaling, simpler deployment, and lower maintenance overhead than Kubernetes.
 
-Kubernetes would introduce additional cluster management, networking, and platform complexity without delivering meaningful value for this assignment. Cloud Run better matches the goal of demonstrating platform engineering on Google-managed services while keeping the solution concise, production-ready, and easy to review.
+Kubernetes would add cluster lifecycle management, networking complexity, and more operational surface area without improving the goals of this assignment.
+
+## Why Terraform Manages Infrastructure
+
+Terraform keeps the deployment reproducible and reviewable. The infrastructure is small, mostly static, and well suited to declarative management.
+
+Using Terraform also makes it clear which Google Cloud resources are required and keeps the submission aligned with infrastructure-as-code practices expected in platform engineering.
+
+## Why Prometheus Metrics Were Chosen
+
+Prometheus is a lightweight, widely understood metrics model for API throughput, latency, and dependency health.
+
+It fits the application’s stateless design, integrates cleanly with Grafana, and provides the operational signals needed for a take-home assignment without adding unnecessary complexity.
