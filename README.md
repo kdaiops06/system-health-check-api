@@ -111,7 +111,7 @@ HealthAggregator --> JSONResponse
 FastAPI --> PrometheusMetrics
 ```
 
-Infrastructure
+## Infrastructure
 
 ```mermaid
 flowchart TD
@@ -129,7 +129,7 @@ CloudRun --> Prometheus
 Prometheus --> Grafana
 ```
 
-More detailed architecture diagrams are available in:
+### More detailed architecture diagrams are available in:
 
 ```
 docs/architecture.md
