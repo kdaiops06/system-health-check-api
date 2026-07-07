@@ -21,6 +21,7 @@ htmlcov/
 *.tfstate
 *.tfstate.*
 terraform.tfvars
+*.tfplan
 
 # OS
 .DS_Store

@@ -1,25 +1,25 @@
 # Platform Considerations
 
-This document summarizes the current platform implementation and the next production-oriented improvements for the System Health Check API.
-
 ## Current Implementation
 
-- **Cloud Run** - deploys the application as a managed, stateless container service.
-- **Stateless architecture** - each request is processed independently with no persistent application state.
-- **Docker** - packages the service consistently for local development and Cloud Run.
-- **GitHub Actions** - runs CI checks and builds the container image.
-- **Terraform** - provisions the Google Cloud resources required for deployment.
-- **Structured logging** - emits application logs in a consistent format for centralized ingestion.
-- **Prometheus metrics** - exposes request and health-check metrics for observability.
-- **Health endpoints** - provides `/health`, `/live`, and `/ready` endpoints for service checks.
+- **Cloud Run** - managed stateless runtime for the API.
+- **Stateless architecture** - request-scoped processing with no persistent application state.
+- **Docker** - consistent packaging for local development and Cloud Run.
+- **GitHub Actions** - CI pipeline for linting, tests, builds, and Terraform validation.
+- **Terraform** - declarative infrastructure for Cloud Run and Artifact Registry.
+- **Structured logging** - application logs emitted in a consistent format.
+- **Prometheus metrics** - request, latency, and health metrics exposed for observability.
+- **Health endpoints** - `/health`, `/live`, and `/ready` for service checks.
 
 ## Future Production Improvements
 
-- **Managed Prometheus** - centralize metrics collection and retention in Google Cloud.
-- **Cloud Monitoring dashboards** - provide operational visibility for latency, health, and traffic.
-- **Alert Policies** - notify operators when health or performance thresholds are breached.
-- **Error Budgets** - define reliability targets and manage release risk.
-- **SLOs** - measure service reliability against user-facing expectations.
-- **Cloud Trace** - add request tracing for deeper latency analysis.
-- **OpenTelemetry** - standardize observability signals across logs, metrics, and traces.
-- **Vertex AI assisted incident analysis** - accelerate incident triage, summarization, and pattern detection.
+- **Cloud Monitoring** - dashboards and alerting for operational visibility.
+- **Managed Prometheus** - centralized metric retention and queryable metrics in Google Cloud.
+- **OpenTelemetry** - standard tracing and metrics instrumentation across services.
+- **Cloud Trace** - request tracing for latency analysis.
+- **SLO** - user-facing reliability targets.
+- **SLI** - measurable service indicators for availability and latency.
+- **Error Budget** - release and reliability guardrail.
+- **Alert Policies** - actionable operator notifications.
+- **Vertex AI assisted incident response** - AI summaries, correlation, and triage support.
+- **Multi-region deployment** - higher availability and regional resilience.

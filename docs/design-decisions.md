@@ -1,91 +1,99 @@
 # Design Decisions
 
-This document records the key engineering choices made for the System Health Check API.
+This document summarizes the core engineering choices made for the System Health Check API.
 
 ## FastAPI
 
 **Decision:** Use FastAPI for the REST API.
 
-**Rationale:** It provides async-native request handling, strong Pydantic integration, and a clean developer experience for a small production-oriented service.
+**Reason:** It provides async-native request handling, strong validation support, and a concise programming model for a small production MVP.
 
-**Tradeoff:** FastAPI is more opinionated than lighter frameworks, but the reduced boilerplate and built-in validation are worth it.
+**Tradeoff:** FastAPI is more opinionated than a minimal framework, but it reduces boilerplate and improves maintainability.
 
 ## Pydantic
 
 **Decision:** Use Pydantic for request and response models.
 
-**Rationale:** It enforces schema validation, simplifies serialization, and keeps API contracts explicit.
+**Reason:** It gives explicit contracts, schema validation, and predictable serialization for API payloads.
 
-**Tradeoff:** Validation adds a small runtime cost, which is acceptable for this workload.
+**Tradeoff:** Validation adds a small runtime cost, which is acceptable for this service.
 
 ## NetworkX
 
-**Decision:** Use NetworkX to represent and validate dependency graphs.
+**Decision:** Use NetworkX for DAG modeling and validation.
 
-**Rationale:** It provides reliable DAG handling, cycle detection, and graph traversal without custom graph-engine code.
+**Reason:** It provides reliable graph primitives, cycle detection, and traversal without custom graph-engine code.
 
-**Tradeoff:** It adds an external dependency, but it improves correctness and reduces implementation risk.
+**Tradeoff:** It adds an external dependency, but it reduces implementation risk.
 
 ## Breadth First Search
 
-**Decision:** Traverse dependency graphs with Breadth First Search.
+**Decision:** Traverse the graph with Breadth First Search.
 
-**Rationale:** BFS provides a predictable execution order for dependency trees and is easy to reason about during debugging.
+**Reason:** BFS provides a clear and deterministic order for dependency evaluation.
 
-**Tradeoff:** DFS could also work, but BFS is more intuitive for component-level evaluation.
+**Tradeoff:** DFS would also work, but BFS is easier to reason about when validating dependency trees.
 
 ## asyncio
 
-**Decision:** Execute health checks concurrently with `asyncio`.
+**Decision:** Run health checks concurrently with asyncio.
 
-**Rationale:** Health checks are network-bound, so concurrency reduces total request time and improves throughput.
+**Reason:** Component checks are network-bound, so concurrency improves throughput and reduces total request time.
 
-**Tradeoff:** Async orchestration is slightly more complex than sequential code, but the performance benefit is significant.
+**Tradeoff:** Async orchestration is slightly more complex than sequential code.
 
-## httpx.AsyncClient
+## httpx
 
-**Decision:** Use `httpx.AsyncClient` for outbound component checks.
+**Decision:** Use httpx.AsyncClient for outbound checks.
 
-**Rationale:** It is a modern async HTTP client with good timeout handling and connection reuse.
+**Reason:** It is a modern async HTTP client with connection pooling and straightforward timeout handling.
 
-**Tradeoff:** It requires careful timeout and exception handling, but it fits the asynchronous API model well.
-
-## Stateless Request Processing
-
-**Decision:** Keep aggregation and orchestration request-scoped and in memory.
-
-**Rationale:** The assignment does not require persistence, and stateless processing fits Cloud Run well.
-
-**Tradeoff:** The service does not retain historical health data, which would require external storage in a production expansion.
-
-## Prometheus Metrics
-
-**Decision:** Expose application metrics with Prometheus.
-
-**Rationale:** Metrics provide visibility into request volume, latency, and component health, and integrate well with Google Cloud observability.
-
-**Tradeoff:** Only core metrics are implemented to keep the solution focused.
+**Tradeoff:** It requires explicit timeout and exception management.
 
 ## Cloud Run
 
-**Decision:** Deploy the application to Google Cloud Run.
+**Decision:** Deploy the application on Cloud Run.
 
-**Rationale:** Cloud Run provides managed scaling, low operational overhead, and a strong fit for stateless HTTP services.
+**Reason:** It is a managed, stateless HTTP runtime that fits the assignment’s operational scope and keeps the platform surface small.
 
-**Tradeoff:** It offers less infrastructure control than Kubernetes, but that is a benefit here because the assignment favors simplicity.
+**Tradeoff:** It offers less infrastructure control than Kubernetes, which is acceptable for this workload.
+
+## Terraform
+
+**Decision:** Manage infrastructure with Terraform.
+
+**Reason:** It makes the deployment reproducible, reviewable, and easy to understand in a platform engineering review.
+
+**Tradeoff:** It introduces a small amount of IaC overhead, which is worth the clarity it provides.
 
 ## Docker
 
-**Decision:** Package the application as a container image.
+**Decision:** Package the service in Docker.
 
-**Rationale:** Containers provide reproducible builds and make the service portable across local development and Cloud Run.
+**Reason:** Containers make local execution and Cloud Run deployment consistent.
 
-**Tradeoff:** Containerization adds a small build step, but it standardizes runtime behavior and deployment.
+**Tradeoff:** It adds a build step, but it standardizes the runtime environment.
+
+## Prometheus
+
+**Decision:** Expose metrics with Prometheus.
+
+**Reason:** It is a simple and widely used metrics format for request volume, latency, and component health.
+
+**Tradeoff:** The implementation intentionally stays minimal and does not include advanced telemetry pipelines.
+
+## Grafana
+
+**Decision:** Use Grafana for dashboard visualization.
+
+**Reason:** It provides a clear operational view of the application metrics and supports reviewer-friendly observability.
+
+**Tradeoff:** A dashboard adds a small amount of setup, but it improves the submission significantly.
 
 ## GitHub Actions
 
 **Decision:** Use GitHub Actions for CI.
 
-**Rationale:** It provides a straightforward, repository-native pipeline for tests, linting, and image builds.
+**Reason:** It is easy to review, repository-native, and sufficient for linting, tests, Docker builds, and Terraform validation.
 
-**Tradeoff:** It is less customizable than a full internal CI platform, but it is sufficient for a take-home assignment and easy to review.
+**Tradeoff:** It is not as customizable as a larger internal CI platform, but it is appropriate for this project.
